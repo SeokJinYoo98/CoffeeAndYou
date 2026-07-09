@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>날짜 잡을래?</title>
+  <style>
+    :root {
+      --bg-1: #fff1f5;
+      --bg-2: #ffe3c2;
+      --bg-3: #dff7ef;
+      --card: rgba(255, 255, 255, 0.86);
+      --text: #35251f;
+      --muted: #7b6258;
+      --primary: #ff7d97;
+      --primary-dark: #e85d7c;
+      --coffee: #8b5e3c;
+      --shadow: 0 18px 48px rgba(121, 75, 64, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
+        "Noto Sans KR", "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.9) 0 7%, transparent 8%),
+        radial-gradient(circle at 86% 12%, rgba(255, 214, 226, 0.85) 0 9%, transparent 10%),
+        radial-gradient(circle at 78% 84%, rgba(213, 248, 231, 0.95) 0 12%, transparent 13%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+    }
+
+    .page {
+      width: min(100%, 430px);
+      position: relative;
+    }
+
+    .card {
+      position: relative;
+      min-height: min(660px, calc(100dvh - 32px));
+      max-height: calc(100dvh - 32px);
+      overflow: hidden;
+      padding: 28px 22px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .card::before,
+    .card::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .card::before {
+      width: 118px;
+      height: 118px;
+      top: -50px;
+      right: -42px;
+      background: rgba(255, 125, 151, 0.16);
+    }
+
+    .card::after {
+      width: 86px;
+      height: 86px;
+      left: -32px;
+      bottom: -24px;
+      background: rgba(139, 94, 60, 0.12);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 22px;
+      padding: 28px 22px 22px;
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .screen.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .badge {
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      min-height: 68px;
+      border-radius: 24px;
+      background: #fff7ed;
+      box-shadow: inset 0 -5px 0 rgba(139, 94, 60, 0.08);
+      font-size: 34px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+      text-align: center;
+    }
+
+    h1,
+    h2 {
+      font-size: clamp(30px, 9vw, 42px);
+      line-height: 1.18;
+      letter-spacing: 0;
+      word-break: keep-all;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    .button-area {
+      position: relative;
+      width: 100%;
+      height: 160px;
+      margin-top: 2px;
+    }
+
+    button,
+    .link-button {
+      border: 0;
+      border-radius: 18px;
+      min-height: 56px;
+      padding: 15px 18px;
+      font: inherit;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    button:active,
+    .link-button:active {
+      transform: translateY(2px) scale(0.98);
+    }
+
+    .primary {
+      background: linear-gradient(180deg, #ff8aa4, var(--primary));
+      color: #fff;
+      box-shadow: 0 10px 0 var(--primary-dark), 0 18px 26px rgba(232, 93, 124, 0.24);
+    }
+
+    .secondary {
+      background: #fff;
+      color: var(--coffee);
+      box-shadow: 0 10px 0 rgba(139, 94, 60, 0.16), 0 14px 20px rgba(139, 94, 60, 0.1);
+    }
+
+    .ghost {
+      background: #fffaf7;
+      color: #8c5d54;
+      box-shadow: 0 9px 0 rgba(140, 93, 84, 0.13), 0 14px 20px rgba(140, 93, 84, 0.1);
+    }
+
+    #yesBtn {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: calc(50% - 7px);
+    }
+
+    #noBtn {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: calc(50% - 7px);
+      z-index: 2;
+    }
+
+    #noBtn.is-running {
+      transition: left 170ms cubic-bezier(0.22, 0.9, 0.34, 1.22),
+        top 170ms cubic-bezier(0.22, 0.9, 0.34, 1.22),
+        transform 120ms ease;
+    }
+
+    .course-list {
+      display: grid;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .course-btn {
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 8px 0 rgba(255, 125, 151, 0.16), 0 14px 20px rgba(121, 75, 64, 0.1);
+    }
+
+    .course-btn span {
+      display: inline-flex;
+      width: 32px;
+      height: 32px;
+      margin-right: 8px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: #fff1f5;
+    }
+
+    .result-box {
+      width: 100%;
+      padding: 16px;
+      border-radius: 22px;
+      background: #fffaf7;
+      border: 2px dashed rgba(255, 125, 151, 0.42);
+      text-align: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      word-break: keep-all;
+    }
+
+    .link-button {
+      display: inline-flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .tiny {
+      position: absolute;
+      color: rgba(53, 37, 31, 0.22);
+      font-size: 22px;
+      pointer-events: none;
+      animation: float 3.4s ease-in-out infinite;
+    }
+
+    .tiny.one {
+      top: 20px;
+      left: 22px;
+    }
+
+    .tiny.two {
+      right: 24px;
+      bottom: 24px;
+      animation-delay: -1.2s;
+    }
+
+    @keyframes float {
+      0%,
+      100% {
+        transform: translateY(0) rotate(-8deg);
+      }
+      50% {
+        transform: translateY(-8px) rotate(8deg);
+      }
+    }
+
+    @media (max-height: 640px) {
+      .card {
+        min-height: calc(100dvh - 24px);
+        border-radius: 24px;
+      }
+
+      .screen {
+        gap: 14px;
+        padding: 22px 18px 18px;
+      }
+
+      .badge {
+        min-width: 56px;
+        min-height: 56px;
+        border-radius: 20px;
+        font-size: 28px;
+      }
+
+      h1,
+      h2 {
+        font-size: 29px;
+      }
+
+      .button-area {
+        height: 136px;
+      }
+
+      button,
+      .link-button {
+        min-height: 52px;
+        padding: 13px 14px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" aria-live="polite">
+    <section class="card" id="card">
+      <span class="tiny one">♡</span>
+      <span class="tiny two">☕</span>
+
+      <div class="screen active" id="introScreen">
+        <div class="badge" aria-hidden="true">💌</div>
+        <h1>나 너 보고 싶은데<br>날짜 잡을래?</h1>
+        <p>거절 버튼은 살짝 낯가립니다.</p>
+
+        <div class="button-area" id="buttonArea">
+          <button class="primary" id="yesBtn" type="button">응 ☕</button>
+          <button class="ghost" id="noBtn" type="button">다시 생각해볼래</button>
+        </div>
+      </div>
+
+      <div class="screen" id="courseScreen">
+        <div class="badge" aria-hidden="true">✨</div>
+        <h2>뭐 할래?</h2>
+        <div class="course-list">
+          <button class="course-btn" type="button" data-course="토이스토리 보자">
+            <span aria-hidden="true">🎬</span>토이스토리 보자
+          </button>
+          <button class="course-btn" type="button" data-course="카공하자">
+            <span aria-hidden="true">📚</span>카공하자
+          </button>
+          <button class="course-btn" type="button" data-course="술 한 잔 하자">
+            <span aria-hidden="true">🍻</span>술 한 잔 하자
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="resultScreen">
+        <div class="badge" aria-hidden="true">🎉</div>
+        <div class="result-box" id="selectedCourse">선택한 코스</div>
+        <p>좋은 선택입니다<br>이제 일정만 작성하면 됩니다.</p>
+        <button class="primary link-button" id="formBtn" type="button">일정 작성하러 가기</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Google Form 링크는 여기만 바꾸면 됩니다.
+    const FORM_URL = "https://forms.gle/";
+
+    const introScreen = document.querySelector("#introScreen");
+    const courseScreen = document.querySelector("#courseScreen");
+    const resultScreen = document.querySelector("#resultScreen");
+    const yesBtn = document.querySelector("#yesBtn");
+    const noBtn = document.querySelector("#noBtn");
+    const buttonArea = document.querySelector("#buttonArea");
+    const selectedCourse = document.querySelector("#selectedCourse");
+    const formBtn = document.querySelector("#formBtn");
+    const courseButtons = document.querySelectorAll(".course-btn");
+
+    function showScreen(nextScreen) {
+      [introScreen, courseScreen, resultScreen].forEach((screen) => {
+        screen.classList.toggle("active", screen === nextScreen);
+      });
+    }
+
+    function boxesOverlap(a, b, gap) {
+      return !(
+        a.right + gap < b.left ||
+        a.left - gap > b.right ||
+        a.bottom + gap < b.top ||
+        a.top - gap > b.bottom
+      );
+    }
+
+    function moveNoButton(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      noBtn.classList.add("is-running");
+
+      const maxX = Math.max(0, buttonArea.clientWidth - noBtn.offsetWidth);
+      const maxY = Math.max(0, buttonArea.clientHeight - noBtn.offsetHeight);
+      const yesBox = {
+        left: yesBtn.offsetLeft,
+        top: yesBtn.offsetTop,
+        right: yesBtn.offsetLeft + yesBtn.offsetWidth,
+        bottom: yesBtn.offsetTop + yesBtn.offsetHeight
+      };
+
+      let nextX = 0;
+      let nextY = 0;
+
+      // "응" 버튼과 너무 겹치지 않는 위치를 몇 번 시도합니다.
+      for (let i = 0; i < 18; i += 1) {
+        const candidateX = Math.round(Math.random() * maxX);
+        const candidateY = Math.round(Math.random() * maxY);
+        const candidateBox = {
+          left: candidateX,
+          top: candidateY,
+          right: candidateX + noBtn.offsetWidth,
+          bottom: candidateY + noBtn.offsetHeight
+        };
+
+        nextX = candidateX;
+        nextY = candidateY;
+
+        if (!boxesOverlap(candidateBox, yesBox, 10)) {
+          break;
+        }
+      }
+
+      noBtn.style.left = `${nextX}px`;
+      noBtn.style.top = `${nextY}px`;
+      noBtn.style.right = "auto";
+      noBtn.style.bottom = "auto";
+    }
+
+    yesBtn.addEventListener("click", () => showScreen(courseScreen));
+
+    ["pointerenter", "pointerdown", "touchstart", "focus"].forEach((eventName) => {
+      noBtn.addEventListener(eventName, moveNoButton, { passive: false });
+    });
+
+    courseButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedCourse.textContent = button.dataset.course;
+        showScreen(resultScreen);
+      });
+    });
+
+    formBtn.addEventListener("click", () => {
+      window.location.href = FORM_URL;
+    });
+  </script>
+</body>
+</html>
