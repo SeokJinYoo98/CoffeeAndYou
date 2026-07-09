@@ -192,7 +192,7 @@
     .button-area {
       position: relative;
       width: 100%;
-      height: 96px;
+      height: 154px;
       margin-top: 0;
     }
 
@@ -251,6 +251,13 @@
       align-items: flex-end;
       justify-content: center;
       z-index: 2;
+      transition: left 180ms cubic-bezier(0.22, 0.9, 0.34, 1.18),
+        top 180ms cubic-bezier(0.22, 0.9, 0.34, 1.18);
+    }
+
+    .deny-tap-target.is-running {
+      right: auto;
+      bottom: auto;
     }
 
     #noBtn {
@@ -383,7 +390,7 @@
       }
 
       .button-area {
-        height: 86px;
+        height: 132px;
       }
 
       button,
@@ -456,6 +463,7 @@
     const resultScreen = document.querySelector("#resultScreen");
     const yesBtn = document.querySelector("#yesBtn");
     const noBtn = document.querySelector("#noBtn");
+    const buttonArea = document.querySelector("#buttonArea");
     const denyTapTarget = document.querySelector("#denyTapTarget");
     const missNote = document.querySelector("#missNote");
     const selectedCourse = document.querySelector("#selectedCourse");
@@ -483,6 +491,66 @@
     const denyScales = [0.85, 0.7, 0.5];
     let denyStep = 0;
 
+    function boxesOverlap(a, b, gap) {
+      return !(
+        a.right + gap < b.left ||
+        a.left - gap > b.right ||
+        a.bottom + gap < b.top ||
+        a.top - gap > b.bottom
+      );
+    }
+
+    function moveDenyButton() {
+      denyTapTarget.classList.add("is-running");
+
+      const maxX = Math.max(0, buttonArea.clientWidth - denyTapTarget.offsetWidth);
+      const maxY = Math.max(0, buttonArea.clientHeight - denyTapTarget.offsetHeight);
+      const gap = 10;
+      const yesBox = {
+        left: yesBtn.offsetLeft,
+        top: yesBtn.offsetTop,
+        right: yesBtn.offsetLeft + yesBtn.offsetWidth,
+        bottom: yesBtn.offsetTop + yesBtn.offsetHeight
+      };
+      const randomBetween = (min, max) => Math.round(min + Math.random() * (max - min));
+      const safeZones = [];
+      const rightMin = Math.ceil(yesBox.right + gap);
+      const topMax = Math.floor(yesBox.top - denyTapTarget.offsetHeight - gap);
+
+      if (rightMin <= maxX) {
+        safeZones.push(() => ({
+          x: randomBetween(rightMin, maxX),
+          y: randomBetween(0, maxY)
+        }));
+      }
+
+      if (topMax >= 0) {
+        safeZones.push(() => ({
+          x: randomBetween(0, maxX),
+          y: randomBetween(0, Math.min(topMax, maxY))
+        }));
+      }
+
+      // 버튼 영역 밖으로 나가지 않으면서 수락 버튼과 겹치지 않는 구역만 사용합니다.
+      const pick = safeZones.length > 0
+        ? safeZones[Math.floor(Math.random() * safeZones.length)]()
+        : { x: maxX, y: 0 };
+      const fallbackBox = {
+        left: pick.x,
+        top: pick.y,
+        right: pick.x + denyTapTarget.offsetWidth,
+        bottom: pick.y + denyTapTarget.offsetHeight
+      };
+
+      if (boxesOverlap(fallbackBox, yesBox, gap)) {
+        pick.x = maxX;
+        pick.y = 0;
+      }
+
+      denyTapTarget.style.left = `${pick.x}px`;
+      denyTapTarget.style.top = `${pick.y}px`;
+    }
+
     function handleDenyTap(event) {
       event.preventDefault();
 
@@ -502,7 +570,12 @@
         noBtn.textContent = "나도 ";
         noBtn.dataset.acceptReady = "true";
         noBtn.setAttribute("aria-label", "나도");
+      } else {
+        noBtn.textContent = "거절하기 😝";
+        noBtn.setAttribute("aria-label", "거절하기 메롱");
       }
+
+      moveDenyButton();
     }
 
     yesBtn.addEventListener("click", acceptInvite);
